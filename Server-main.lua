@@ -8,6 +8,8 @@ local domain = ".com"
 rednet.host("online",tostring(Servername..domain))
 term.clear()
 print("server hosted under"..tostring(Servername..domain))                  --log stamp
+--table for sending data
+
 
 --main handle loop
 local function handle()
@@ -28,16 +30,27 @@ local function handle()
     end
 end
 --region clarify redirect
-function RCR(Cid,rmsg)
+function RCR(Cid, rmsg)
+    local page = rmsg.page or "home"
+    print("Computer"..Cid.." requested "..page)                             --log stamp
+    local file = fs.open("/disk/"..page..".json", "r")
 
-    if rmsg.page == nil then
-        print("Computer"..Cid.." requested Home")                       --log stamp
-        fs.open("/disk/home","r")
-    else
-        print("Computer"..Cid.." requested "..tostring(rmsg.page))      --log stamp
-        local cmsg = fs.open(tostring(rmsg.page),"r")
-        rednet.send(Cid,cmsg)
+    --Main page is always called Home
+    if not file then
+        file = fs.open("/disk/home.json", "r")
+        page = "home"
     end
+
+    -- json to table
+    local csmg = textutils.unserializeJSON(file.readAll())
+    file.close()
+    local csmg = {
+        type = "rel",
+        page = page,
+        payload = pageTable
+    }
+    -- Send packet
+    rednet.send(Cid,csmg)
 end
 
 --start main function
