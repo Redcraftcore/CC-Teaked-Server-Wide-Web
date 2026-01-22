@@ -26,8 +26,13 @@ local function handle()
         --request type check(not yet implemented)
         if rmsg.type == "req" then
             print("Computer"..Cid.." requested page")                       --log stamp
+            rednet.send(Cid,cmsg)
         elseif rmsg == "rel" then
             print("Computer"..Cid.." requested reload of page")             --log stamp
+            rednet.send(Cid,cmsg)
         end
     end
 end
+
+--start main function
+handle()
