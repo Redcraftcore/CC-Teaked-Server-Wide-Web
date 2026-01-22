@@ -29,7 +29,7 @@ local function handle()
 end
 --region clarify redirect
 function RCR(Cid,rmsg)
-    --region clarify redirect
+
     if rmsg.page == nil then
         print("Computer"..Cid.." requested Home")                       --log stamp
         fs.open("/disk/home","r")
