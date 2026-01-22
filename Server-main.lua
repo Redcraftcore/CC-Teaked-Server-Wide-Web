@@ -14,23 +14,29 @@ local function handle()
     while true do
         local Cid , rmsg = rednet.receive()
 
-        --region clarify redirect
-        if rmsg.page == nil then
-            print("Computer"..Cid.." requested Home")                       --log stamp
-            fs.open("/disk/home","r")
-        else
-            print("Computer"..Cid.." requested "..tostring(rmsg.page))      --log stamp
-            local cmsg = fs.open(tostring(rmsg.page),"r")
-            rednet.send(Cid,cmsg)
-        end
         --request type check(not yet implemented)
         if rmsg.type == "req" then
             print("Computer"..Cid.." requested page")                       --log stamp
-            rednet.send(Cid,cmsg)
-        elseif rmsg == "rel" then
+            RCR(Cid,rmsg)
+        elseif rmsg.type == "rel" then
             print("Computer"..Cid.." requested reload of page")             --log stamp
-            rednet.send(Cid,cmsg)
+            RCR(Cid,rmsg)
+        else
+            rednet.send(Cid,"Malformed msg try again")
         end
+        os.sleep(0.025)
+    end
+end
+--region clarify redirect
+function RCR(Cid,rmsg)
+    --region clarify redirect
+    if rmsg.page == nil then
+        print("Computer"..Cid.." requested Home")                       --log stamp
+        fs.open("/disk/home","r")
+    else
+        print("Computer"..Cid.." requested "..tostring(rmsg.page))      --log stamp
+        local cmsg = fs.open(tostring(rmsg.page),"r")
+        rednet.send(Cid,cmsg)
     end
 end
 
