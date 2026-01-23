@@ -5,6 +5,7 @@ local disk = peripheral.wrap("bottom")
 local Servername = "test"
 local domain = ".com"
 --host and log for host start
+rednet.open("top")
 rednet.host("online",tostring(Servername..domain))
 term.clear()
 print("server hosted under"..tostring(Servername..domain))                  --log stamp
