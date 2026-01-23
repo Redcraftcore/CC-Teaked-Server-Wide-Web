@@ -1,6 +1,6 @@
 --Server v2
 local modem = peripheral.wrap("top")
-local disk = perhibial.wrap("bottom")
+local disk = peripheral.wrap("bottom")
 --Name settings
 local Servername = "test"
 local domain = ".com"
