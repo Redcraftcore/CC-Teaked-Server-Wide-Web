@@ -33,26 +33,27 @@ end
 --region clarify redirect
 function RCR(Cid, rmsg)
     local page = rmsg.page or "home"
-    print("Computer"..Cid.." requested "..page)                             --log stamp
+    print("Computer"..Cid.." requested "..page)
     local file = fs.open("/disk/"..page..".json", "r")
-
-    --Main page is always called Home
+    -- Redirect to home if missing
     if not file then
         file = fs.open("/disk/home.json", "r")
         page = "home"
     end
-
-    -- json to table
-    local csmg = textutils.unserializeJSON(file.readAll())
+    -- Read JSON → table
+    local pageTable = textutils.unserializeJSON(file.readAll())
     file.close()
+    -- Build packet
     local csmg = {
         type = "rel",
         page = page,
         payload = pageTable
     }
+
     -- Send packet
-    rednet.send(Cid,csmg)
+    rednet.send(Cid, csmg)
 end
+
 
 --start main function
 handle()
