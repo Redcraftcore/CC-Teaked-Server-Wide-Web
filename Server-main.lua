@@ -25,6 +25,7 @@ local function handle()
             print("Computer"..Cid.." requested reload of page")             --log stamp
             RCR(Cid,rmsg)
         else
+            print("Computer"..Cid.." requested reload of page")             --log stamp
             rednet.send(Cid,"Malformed msg try again")
         end
         os.sleep(0.025)
@@ -56,7 +57,6 @@ function RCR(Cid, rmsg)
     -- Send packet
     rednet.send(Cid, packet)
 end
-
 
 
 --start main function

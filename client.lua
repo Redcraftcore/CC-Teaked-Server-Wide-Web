@@ -1,53 +1,110 @@
--- client.lua
-local basalt = require("basalt")
-local modem = peripheral.find("modem",rednet.open)
-local execpath = "cache.lua"
---basalt browser head
-local main = basalt.getMainFrame()
+-- CLIENT BROWSER (CLEAN + FIXED)
 
---searchbar
-main:addLabel()
-    :setText("HTTP://")
-    :setPosition(0, 1)
-main:addLabel()
-    :setText("--------------------------")
-    :setPosition(0, 2)
-local search = main:addInput()    
-search:setPosition(8, 1)        -- place next to label
-      :setSize(15, 1)            -- width of the search bar
-      :setText("") -- placeholder text
-      :setBackground(colors.lightGray)
-      :setForeground(colors.black)
-main:addButton()
-    :setText("Load")
-    :setPosition(23,1)
-    :setSize(4,1)
-    :onClick(function ()
-        local serverId = rednet.lookup("http",search:getText())
-            rednet.send(serverId, "request","http")
-        
+local serverID = 1
+local history = {}
+local currentPage = nil
+local buttons = {}
 
-    end)
---tab frame
-local tab = main:addFrame()     --creates frame
-tab:setPosition(0,3)
-    :setSize(27,18)
-    :setBackground(colors.lightGray)
-local program = tab:addProgram()        --adds programm from cache to frame
-program:setPosition(0,0)
-    :setSize(27,18)
-    :setBackground(colors.lightGray)
-    --Background Handler of the client side
-local function handler()
-    while true do
-        local id , reply = rednet.receive("http")
-        if reply then
-            local file = fs.open("cache.lua", "w")
-            file.write(reply)
-            file.close()  -- important!
-            program:execute("cache.lua")  -- execute AFTER file is written
+rednet.open("back")  -- change if needed
+
+
+-- Request function
+local function requestPage(pageName)
+    if pageName == nil then
+        print("ERROR: Tried to request nil page")
+        return
+    end
+
+    rednet.send(serverID, {
+        type = "req",
+        page = pageName
+    })
+end
+
+
+-- Rendering
+local function renderPage(payload)
+    if payload == nil then
+        term.clear()
+        term.setCursorPos(1,1)
+        print("ERROR: Server sent empty payload")
+        return
+    end
+    term.clear()
+    term.setCursorPos(1,1)
+    print(payload.title or "")
+    print("")
+    buttons = {}
+    local line = 3
+    for _, element in ipairs(payload.elements or {}) do
+        term.setCursorPos(1, line)
+        if element.type == "text" then
+            print(element.value)
+        elseif element.type == "button" then
+            print("[" .. element.label .. "]")
+            buttons[line] = element
+        end
+
+        line = line + 1
+    end
+end
+
+
+-- Navigation
+local function navigateTo(pageName)
+    if currentPage then
+        table.insert(history, currentPage)
+    end
+    requestPage(pageName)
+end
+
+
+-- Go back in history
+local function goBack()
+    if #history > 0 then
+        local last = table.remove(history)
+        requestPage(last)
+    end
+end
+
+
+-- Start on Home
+navigateTo("Home")   -- IMPORTANT: matches your server's file name
+
+
+-- Main event loop
+while true do
+    local event, p1, p2, p3 = os.pullEvent()
+    
+    -- Network packet received
+    if event == "rednet_message" then
+        local id, msg = p1, p2
+
+        if type(msg) == "table" then
+            if msg.type == "rel" then
+                currentPage = msg.page
+                renderPage(msg.payload)
+            end
+
+            if msg.type == "update" then
+                renderPage(msg.payload)
+            end
+        else
+            print("ERROR: Received non-table message")
+        end
+    end
+
+    -- Mouse click
+    if event == "mouse_click" then
+        local _, x, y = p1, p2, p3
+
+        local btn = buttons[y]
+        if btn then
+            if btn.goto then
+                navigateTo(btn.goto)
+            elseif btn.action == "back" then
+                goBack()
+            end
         end
     end
 end
---starts both ui and handler
-parallel.waitForAny(basalt.run,handler)
